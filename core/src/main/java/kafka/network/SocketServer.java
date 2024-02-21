@@ -1,13 +1,11 @@
 package kafka.network;
 
-import jdk.jshell.spi.ExecutionControl;
 import kafka.utils.Utils;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -27,7 +25,7 @@ import java.util.List;
 @Getter
 public class SocketServer {
 
-    private static Logger logger = LogManager.getLogger(SocketServer.class);
+    private static Logger logger = LoggerFactory.getLogger(SocketServer.class);
 
     private final int brokerId;
     private final String host;
