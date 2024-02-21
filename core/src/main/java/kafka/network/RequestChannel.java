@@ -48,11 +48,11 @@ public class RequestChannel {
         private final Object requestKey = null;
         private ByteBuffer buffer;
 
-        public final RequestChannel.Request request;
+        public final Request request;
 
         public RequestOrResponse requestObj = RequestKeys.deserializerForKey(buffer.getShort()).apply(buffer);
 
-        public Request(int processor, RequestChannel.Request request) {
+        public Request(int processor, Request request) {
             this.processor = processor;
             this.request = request;
         }
