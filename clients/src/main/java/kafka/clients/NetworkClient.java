@@ -2,12 +2,14 @@ package kafka.clients;
 
 
 import kafka.common.Node;
+import kafka.common.network.NetworkSend;
 import kafka.common.network.Selectable;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -24,6 +26,8 @@ public class NetworkClient implements KafkaClient {
 
     @Override
     public List<ClientResponse> poll(List<ClientRequest> requests, long timeout, long now) {
+        List<NetworkSend> sends = new ArrayList<>();
+
         return null;
     }
 

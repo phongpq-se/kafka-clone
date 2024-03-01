@@ -83,7 +83,6 @@ public class Processor extends AbstractServerThread {
 
     void write(SelectionKey key) {
         logger.info("Writing to " + key);
-
     }
 
     private void configureNewConnections() {
