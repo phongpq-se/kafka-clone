@@ -22,10 +22,20 @@ public interface Selectable {
     /**
      * Initiate any sends provided, and make progress on any other I/O operations in-flight (connections,
      * disconnections, existing sends, and receives)
+     *
      * @param timeout The amount of time to block if there is nothing to do
-     * @param sends The new sends to initiate
+     * @param sends   The new sends to initiate
      * @throws IOException
      */
-    public void poll(long timeout, List<NetworkSend> sends) throws IOException;
+    void poll(long timeout, List<NetworkSend> sends) throws IOException;
 
+    /**
+     * The list of sends that completed on the last {@link #poll(long, List) poll()} call.
+     */
+    List<NetworkSend> completedSends();
+
+    /**
+     * The list of receives that completed on the last {@link #poll(long, List) poll()} call.
+     */
+    List<NetworkReceive> completedReceives();
 }

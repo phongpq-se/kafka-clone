@@ -1,5 +1,6 @@
 package kafka.common.network;
 
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,11 +17,15 @@ import java.util.ArrayList;
 /**
  * @author phongpq
  */
+
+@Getter
 public class Selector implements Selectable {
     private static final Logger log = LoggerFactory.getLogger(Selector.class);
     private final List<Integer> connected;
     private final java.nio.channels.Selector selector;
     private final Map<Integer, SelectionKey> keys;
+    private final List<NetworkSend> completedSends;
+    private final List<NetworkReceive> completedReceives;
 
     public Selector() {
         try {
@@ -29,6 +34,8 @@ public class Selector implements Selectable {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        this.completedSends = new ArrayList<>();
+        this.completedReceives = new ArrayList<>();
         this.keys = new HashMap<>();
     }
 
@@ -94,16 +101,36 @@ public class Selector implements Selectable {
                 SocketChannel channel = channel(key);
                 if (key.isConnectable()) {
                     log.info("Connectable " + transmissions.id);
+                    channel.finishConnect();
+                    key.interestOps(key.interestOps() & ~SelectionKey.OP_CONNECT | SelectionKey.OP_READ);
+                    this.connected.add(transmissions.id);
                 }
                 /* read from any connections that have readable data */
                 if (key.isReadable()) {
+                    if (!transmissions.hasReceive()) {
+                        transmissions.receive = new NetworkReceive(transmissions.id);
+                    }
+                    transmissions.receive.readFrom(channel);
+                    if (transmissions.receive.complete()) {
+                        log.info("Client completed read");
+                        this.completedReceives.add(transmissions.receive);
+                        transmissions.receive.payload().rewind();
+                        transmissions.clearReceive();
+                    }
                     log.info("Readable " + transmissions.id);
                 }
                 /* write to any sockets that have space in their buffer and for which we have data */
                 if (key.isWritable()) {
                     log.info("Writable " + transmissions.id);
                     transmissions.send.writeTo(channel);
+                    if (transmissions.send.getRemaining() <= 0) {
+                        this.completedSends.add(transmissions.send);
+                        log.info("Client completed send in transmission " + transmissions.id);
+                        transmissions.clearSend();
+                        key.interestOps(key.interestOps() & ~SelectionKey.OP_WRITE);
+                    }
                 }
+
             }
         }
     }
@@ -182,6 +209,18 @@ public class Selector implements Selectable {
 
         public boolean hasSend() {
             return this.send != null;
+        }
+
+        public boolean hasReceive() {
+            return this.receive != null;
+        }
+
+        public void clearSend() {
+            this.send = null;
+        }
+
+        public void clearReceive() {
+            this.receive = null;
         }
     }
 }

@@ -16,19 +16,38 @@ import java.util.List;
  * @author phongpq
  */
 
-@AllArgsConstructor
 public class NetworkClient implements KafkaClient {
 
     /* the selector used to perform network i/o */
     private final Selectable selector;
 
-    private static final Logger logger = LoggerFactory.getLogger(NetworkClient.class);
+    public NetworkClient(Selectable selector) {
+        this.selector = selector;
+    }
+
+    private static final Logger log = LoggerFactory.getLogger(NetworkClient.class);
 
     @Override
     public List<ClientResponse> poll(List<ClientRequest> requests, long timeout, long now) {
         List<NetworkSend> sends = new ArrayList<>();
 
-        return null;
+        for (ClientRequest request : requests) {
+            int nodeId = request.getRequest().destination();
+            sends.add(request.getRequest());
+        }
+
+        // do the I/O
+        try {
+            this.selector.poll(timeout, sends);
+        } catch (IOException e) {
+            log.error("Unexpected error during I/O in producer network thread", e);
+        }
+
+        List<ClientResponse> responses = new ArrayList<ClientResponse>();
+//        this.selector.completedSends().forEach(send -> {
+//            responses.add(new ClientResponse())
+//        });
+        return responses;
     }
 
     /**
@@ -36,7 +55,7 @@ public class NetworkClient implements KafkaClient {
      */
     private void initiateConnect(Node node, long now) {
         try {
-            logger.debug("Initiating connection to node {} at {}:{}.", node.getId(), node.getHost(), node.getPort());
+            log.debug("Initiating connection to node {} at {}:{}.", node.getId(), node.getHost(), node.getPort());
         } catch (Exception ex) {
             ex.printStackTrace();
         }
